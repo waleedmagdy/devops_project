@@ -49,13 +49,22 @@ jobs:
           ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
           IMAGE_TAG: details-${{ steps.get-sha.outputs.sha }}
         run: |
-          sed -i "s|image: 860348619467.dkr.ecr.us-east-1.amazonaws.com/my-ecr-repo:.*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|" manifests/kubernetes/details/deployment_details.yaml
-          cat manifests/kubernetes/details/deployment_details.yaml
-
-      - name: Commit and Push Changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add manifests/kubernetes/details/deployment_details.yaml
-          git commit -m "Update deployment image in workflow"
-          git push
+          DEPLOYMENT_FILE="manifests/kubernetes/details/deployment_details.yaml"
+          
+          # Check if the deployment file needs update
+          if grep -q "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" "$DEPLOYMENT_FILE"; then
+            echo "Image already up to date in $DEPLOYMENT_FILE"
+          else
+            # Update the image in the deployment file
+            sed -i "s|image: 654328202400.dkr.ecr.us-east-1.amazonaws.com/my-ecr-repo:.*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|" "$DEPLOYMENT_FILE"
+            
+            # Show the updated deployment file
+            cat "$DEPLOYMENT_FILE"
+            
+            # Commit and push changes
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git add "$DEPLOYMENT_FILE"
+            git commit -m "Update deployment image to $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+            git push
+          fi
