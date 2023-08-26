@@ -1,0 +1,61 @@
+name: Details Service Build, Push and Deploy
+
+on:
+  workflow_dispatch:
+
+  push:
+    paths:
+      - 'bookinfo_app/src/details/**'
+
+env:
+  ECR_REGISTRY: 860348619467.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REPOSITORY: my-ecr-repo
+
+jobs:
+  build_and_push_image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Get short SHA
+        id: get-sha
+        run: echo "::set-output name=sha::$(git rev-parse --short HEAD)"
+
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          IMAGE_TAG: details-${{ steps.get-sha.outputs.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./bookinfo_app/src/details/
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Update Kubernetes Deployment Image
+        env:
+          ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          IMAGE_TAG: details-${{ steps.get-sha.outputs.sha }}
+        run: |
+          sed -i "s|image: 860348619467.dkr.ecr.us-east-1.amazonaws.com/my-ecr-repo:.*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|" manifests/kubernetes/details/deployment_details.yaml
+          cat manifests/kubernetes/details/deployment_details.yaml
+
+      - name: Commit and Push Changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add manifests/kubernetes/details/deployment_details.yaml
+          git commit -m "Update deployment image in workflow"
+          git push
