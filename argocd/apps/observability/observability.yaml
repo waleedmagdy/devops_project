@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/waleedmagdymx/devops_workshop_cicd.git
+    repoURL: git@github.com:waleedmagdy/devops_project.git
     targetRevision: <specific_revision_or_tag>
     path: manifests/observability
   destination:
