@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: details
+  namespace: argocd
+spec:
+  source:
+    repoURL: git@github.com:waleedmagdymx/devops_workshop_cicd.git
+    path: manifests/kubernetes/details
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: staging
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

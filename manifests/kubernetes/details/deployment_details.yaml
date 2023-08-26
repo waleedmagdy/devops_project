@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: details-v1
+  labels:
+    app: details
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: details
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: details
+        version: v1
+    spec:
+      serviceAccountName: bookinfo-details
+      containers:
+      - name: details
+        image: 860348619467.dkr.ecr.us-east-1.amazonaws.com/my-ecr-repo:details-ef08c99
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9080
+
+        resources:
+          requests:
+            cpu: "25m" 
+            memory: "64Mi"   
+          limits:
+            cpu: "300m"   
+            memory: "700Mi"
+
+---

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysqldb-v1
+  labels:
+    app: mysqldb
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysqldb
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: mysqldb
+        version: v1
+    spec:
+      containers:
+      - name: mysqldb
+        image: docker.io/istio/examples-bookinfo-mysqldb:1.18.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3306
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysql-credentials
+                key: rootpasswd
+        args: ["--default-authentication-plugin","mysql_native_password"]
+        volumeMounts:
+        - name: var-lib-mysql
+          mountPath: /var/lib/mysql
+        resources:
+          requests:
+            cpu: "25m" 
+            memory: "64Mi"   
+          limits:
+            cpu: "300m"   
+            memory: "700Mi"
+      volumes:
+      - name: var-lib-mysql
+        emptyDir: {}
+---

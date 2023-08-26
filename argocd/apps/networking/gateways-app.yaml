@@ -1,0 +1,16 @@
+kind: Application
+metadata:
+  name: bookinfo-gateway
+  namespace: argocd
+spec:
+  source:
+    repoURL: git@github.com:waleedmagdymx/devops_workshop_cicd.git
+    path: manifests/networking/gateways
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: staging
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
